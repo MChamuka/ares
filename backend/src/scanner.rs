@@ -1,36 +1,28 @@
 use sha2::{Digest, Sha256};
-use std::fs;
-use std::path::Path;
-use walkdir::WalkDir;
-
 use std::collections::HashSet;
+use std::fs;
 use std::io::{BufRead, BufReader};
+use std::path::Path;
 
-pub fn scan_path(path: &str) {
-    println!("📁 Scanning: {}", path);
+pub fn scan_file(path: &Path) {
     let virus_hashes = load_virus_hashes("virus_hashes.txt");
 
-    for entry in WalkDir::new(path) {
-        let entry = entry.unwrap();
-        let path = entry.path();
+    if path.is_file() {
+        match fs::read(path) {
+            Ok(content) => {
+                let mut hasher = Sha256::new();
+                hasher.update(&content);
+                let result = hasher.finalize();
+                let hash = hex::encode(result);
 
-        if path.is_file() {
-            match fs::read(path) {
-                Ok(content) => {
-                    let mut hasher = Sha256::new();
-                    hasher.update(&content);
-                    let result = hasher.finalize();
-                    let hash = hex::encode(result);
-
-                    if virus_hashes.contains(&hash) {
-                        println!("🚨 VIRUS FOUND in {} ❗", path.display());
-                    } else {
-                        println!("✅ Scanned {} -> {}", path.display(), hash);
-                    }
+                if virus_hashes.contains(&hash) {
+                    println!("🚨 VIRUS FOUND in {} ❗", path.display());
+                } else {
+                    println!("✅ Scanned {} -> {}", path.display(), hash);
                 }
-                Err(e) => {
-                    println!("⚠️ Failed to read {}: {}", path.display(), e);
-                }
+            }
+            Err(e) => {
+                println!("⚠️ Failed to read {}: {}", path.display(), e);
             }
         }
     }
