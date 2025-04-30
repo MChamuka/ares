@@ -1,0 +1,51 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "concurrently \"npm run react-start\" \"npm run electron\"",
+    "react-start": "react-scripts start",
+    "electron": "powershell -Command \"Start-Sleep -s 8\"; electron main.js",
+    "build": "react-scripts build && electron-builder",
+    "rebuild": "electron-rebuild",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^13.5.0",
+    "better-sqlite3": "^11.9.1",
+    "concurrently": "^9.1.2",
+    "electron": "^35.1.1",
+    "electron-builder": "^26.0.12",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "devDependencies": {
+    "electron-rebuild": "^3.2.9",
+    "wait-on": "^8.0.3"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
