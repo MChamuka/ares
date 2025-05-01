@@ -1,8 +1,9 @@
-use crate::scanner::scan_file;
-use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Result, Watcher};
+use crate::scanner::scan_file_and_log;
+use notify::{EventKind, RecursiveMode, Result, Watcher};
 use std::fs;
 use std::sync::mpsc::channel;
-use std::time::Duration;
+
+const ALLOWED_EXTENSIONS: [&str; 4] = ["docx", "pdf", "exe", "zip"];
 
 pub fn watch_directory(path: &str) -> Result<()> {
     let (tx, rx) = channel();
@@ -16,28 +17,26 @@ pub fn watch_directory(path: &str) -> Result<()> {
     watcher.watch(std::path::Path::new(path), RecursiveMode::Recursive)?;
 
     println!("👀 Watching folder: {}", path);
-    println!("⌛ Will stop if no file is added in 20 seconds.");
 
-    loop {
-        // ⏱️ Wait for 20 seconds max for a new event
-        match rx.recv_timeout(Duration::from_secs(20)) {
-            Ok(event) => {
-                if let EventKind::Create(_) = event.kind {
-                    for path in event.paths {
-                        if path.is_file() {
-                            println!("📥 New file detected: {}", path.display());
-                            if let Ok(_) = fs::read(&path) {
-                                scan_file(&path);
+    for event in rx {
+        match event.kind {
+            EventKind::Create(_) => {
+                for path in event.paths {
+                    if path.is_file() {
+                        if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                            if ALLOWED_EXTENSIONS.contains(&ext) {
+                                println!("📥 New file detected: {}", path.display());
+                                if let Ok(data) = fs::read(&path) {
+                                    scan_file_and_log(&path);
+                                }
+                            } else {
+                                println!("⚠️ Skipped unsupported file: {}", path.display());
                             }
                         }
                     }
                 }
             }
-            Err(_) => {
-                // Timeout hit – no activity in the last 20 seconds
-                println!("⏹️ No file added in 20 seconds. Stopping watcher.");
-                break;
-            }
+            _ => {}
         }
     }
 
